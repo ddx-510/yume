@@ -117,6 +117,11 @@ class WebSourcesSection extends StatelessWidget {
                             onPressed: () => _import(context),
                           ),
                           TextButton.icon(
+                            icon: const Icon(Icons.link_rounded, size: 18),
+                            label: const Text('Import from URL'),
+                            onPressed: () => _importUrl(context),
+                          ),
+                          TextButton.icon(
                             icon: const Icon(
                               Icons.content_paste_rounded,
                               size: 18,
@@ -140,6 +145,58 @@ class WebSourcesSection extends StatelessWidget {
         );
       },
     );
+  }
+
+  Future<void> _importUrl(BuildContext context) async {
+    final app = AppServices.of(context);
+    final controller = TextEditingController(
+      text: app.settings.value.ruleRepoUrl,
+    );
+    final url = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Import from URL'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'A URL returning a rule, a list of rules, or an index '
+              '{"rules":[{"url":…}]}. In Yume’s own JSON format — point it '
+              'only at a source you’re allowed to use.',
+              style: TextStyle(fontSize: 12, color: Palette.textFaint),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: const InputDecoration(hintText: 'https://…'),
+              onSubmitted: (v) => Navigator.pop(ctx, v),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancel'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: const Text('Fetch'),
+          ),
+        ],
+      ),
+    );
+    if (url == null || url.trim().isEmpty || !context.mounted) return;
+    final messenger = ScaffoldMessenger.of(context);
+    await app.settings.update((s) => s.copyWith(ruleRepoUrl: url.trim()));
+    messenger.showSnackBar(const SnackBar(content: Text('Fetching rules…')));
+    try {
+      final result = await app.ruleStore.importFromUrl(url.trim());
+      messenger.showSnackBar(SnackBar(content: Text(result.summary)));
+    } catch (e) {
+      messenger.showSnackBar(SnackBar(content: Text('Import failed: $e')));
+    }
   }
 
   Future<void> _import(BuildContext context) async {

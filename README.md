@@ -27,7 +27,7 @@ Black glassmorphism theme: tokens in `lib/ui/theme.dart`, shared glass widgets i
 | **Watchlist**: local statuses/progress, auto-advanced when an episode is watched (≥85 %) | ✅ |
 | **Sync**: push progress to AniList (`SaveMediaListEntry`) and Bangumi (collection + episodes) | ⏳ code done, needs your tokens (see below) |
 | **Source plug-ins**: `MediaSource` interface + registry, Local library and Direct URL sources | ✅ see [docs/PLUGINS.md](docs/PLUGINS.md) |
-| **Web source scraper**: generic rule-driven engine (search → episodes → stream-URL pipeline) configured by JSON rule files you import in Settings. Ships **no** rules; point it only at sources you're allowed to use | ✅ see [docs/PLUGINS.md](docs/PLUGINS.md) |
+| **Web source scraper**: generic rule-driven engine (search → episodes → stream-URL pipeline), **CSS or XPath** selectors, configured by JSON rule files. Import from file, pasted JSON, or a URL/index; every rule is schema-validated with clear errors. Ships **no** rules and no default repo; point it only at sources you're allowed to use | ✅ see [docs/PLUGINS.md](docs/PLUGINS.md) |
 
 ## Run
 
@@ -79,7 +79,7 @@ lib/
                                    progress, watchlist, trackers, cover cache
   danmaku/                         models + parsers, DanDanPlay client, overlay renderer
   sources/                         MediaSource plug-in API + built-in sources
-  sources/web/                     rule-driven web scraper (SiteRule + engine)
+  sources/web/                     rule scraper: SiteRule, CSS/XPath engine, rule store
   ui/screens/                      library, show detail, player, watchlist, sources, settings
   debug/debug_hooks.dart           debug-build-only VM service hooks for automated checks
 test/                              parser, grouping and danmaku parsing tests

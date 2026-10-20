@@ -1,0 +1,29 @@
+{
+  "id": "example-xpath",
+  "name": "Example XPath (template — not a real site)",
+  "baseUrl": "https://example.test",
+  "selectorType": "xpath",
+  "search": {
+    "url": "https://example.test/search?keyword={query}&page={page}",
+    "item": "//div[@class='search-result']//div[@class='item']",
+    "title": ".//*[@class='item-title']",
+    "link": ".//a[@class='item-link']/@href",
+    "cover": ".//img[@class='poster']/@data-src"
+  },
+  "episodes": {
+    "item": "//div[@class='episode-list']/a[@class='episode']",
+    "title": ".",
+    "link": "./@href"
+  },
+  "video": {
+    "steps": [
+      {"selector": "//iframe[@class='player-frame']/@src"},
+      {"resolveRelative": true},
+      {"fetch": true},
+      {"regex": "\"file\"\\s*:\\s*\"(https?:[^\"]+\\.m3u8[^\"]*)\""}
+    ],
+    "headers": {
+      "Referer": "https://example.test/"
+    }
+  }
+}

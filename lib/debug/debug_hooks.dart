@@ -102,6 +102,11 @@ class DebugHooks {
       return ok({});
     });
 
+    developer.registerExtension('ext.yume.importUrl', (_, params) async {
+      final r = await app.ruleStore.importFromUrl(params['url']!);
+      return ok({'added': r.added, 'failed': r.failed, 'summary': r.summary});
+    });
+
     developer.registerExtension(
       'ext.yume.state',
       (_, _) async => ok({

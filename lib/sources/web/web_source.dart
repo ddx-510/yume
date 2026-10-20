@@ -1,19 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:html/dom.dart' as dom;
-import 'package:html/parser.dart' as html;
 import 'package:http/http.dart' as http;
 
 import '../media_source.dart';
+import 'selector_engine.dart';
 import 'site_rule.dart';
 
 /// A [MediaSource] driven by a user-supplied [SiteRule]. The engine is
-/// generic HTML scraping; it ships with no site rules. Only point it at
-/// sources you are allowed to use.
+/// generic HTML scraping (CSS or XPath selectors); it ships with no site
+/// rules. Only point it at sources you are allowed to use.
 class WebSource extends MediaSource {
-  WebSource(this.rule, {http.Client? client}) : _http = client ?? http.Client();
+  WebSource(this.rule, {http.Client? client})
+    : _http = client ?? http.Client(),
+      _engine = SelectorEngine.forType(rule.selectorType);
 
   final SiteRule rule;
   final http.Client _http;
+  final SelectorEngine _engine;
 
   @override
   String get id => rule.id;
@@ -48,20 +50,18 @@ class WebSource extends MediaSource {
     final url = rule.search.url
         .replaceAll('{query}', Uri.encodeQueryComponent(query))
         .replaceAll('{page}', '1');
-    final body = await _get(url);
-    return parseSearch(body, rule, baseForLinks: url);
+    return parseSearch(await _get(url), rule, baseForLinks: url);
   }
 
   @override
-  Future<List<SourceEpisode>> episodes(SourceShow show) async {
-    final body = await _get(show.id);
-    return parseEpisodes(body, rule, baseForLinks: show.id);
-  }
+  Future<List<SourceEpisode>> episodes(SourceShow show) async =>
+      parseEpisodes(await _get(show.id), rule, baseForLinks: show.id);
 
   @override
   Future<PlayableMedia> resolve(SourceShow show, SourceEpisode episode) async {
     final stream = await runPipeline(
       rule.video,
+      _engine,
       startUrl: episode.id,
       startDoc: await _get(episode.id),
       base: rule.baseUrl,
@@ -76,26 +76,6 @@ class WebSource extends MediaSource {
 }
 
 // --- Pure parsing helpers (no network; unit-testable) ----------------------
-
-String? _value(
-  dom.Element el,
-  String? selector,
-  String? attr,
-  String fallback,
-) {
-  final target = selector == null || selector.isEmpty
-      ? el
-      : el.querySelector(selector);
-  if (target == null) return null;
-  final a = attr ?? fallback;
-  final String? v;
-  if (a == 'text') {
-    v = target.text.trim();
-  } else {
-    v = target.attributes[a] ?? target.attributes['data-$a'];
-  }
-  return (v == null || v.trim().isEmpty) ? null : v.trim();
-}
 
 String _resolve(String base, String url) {
   if (url.startsWith('http')) return url;
@@ -112,13 +92,29 @@ List<SourceShow> parseSearch(
   SiteRule rule, {
   required String baseForLinks,
 }) {
-  final doc = html.parse(body);
+  final engine = SelectorEngine.forType(rule.selectorType);
+  final r = rule.search;
   final out = <SourceShow>[];
-  for (final el in doc.querySelectorAll(rule.search.item)) {
-    final title = _value(el, rule.search.title, rule.search.titleAttr, 'text');
-    final link = _value(el, rule.search.link, rule.search.linkAttr, 'href');
+  for (final item in engine.items(body, r.item)) {
+    final title = engine.field(
+      item,
+      r.title,
+      attr: r.titleAttr,
+      fallbackAttr: 'text',
+    );
+    final link = engine.field(
+      item,
+      r.link,
+      attr: r.linkAttr,
+      fallbackAttr: 'href',
+    );
     if (title == null || link == null) continue;
-    final cover = _value(el, rule.search.cover, null, rule.search.coverAttr);
+    final cover = engine.field(
+      item,
+      r.cover,
+      attr: r.coverAttr,
+      fallbackAttr: 'src',
+    );
     out.add(
       SourceShow(
         sourceId: rule.id,
@@ -136,18 +132,24 @@ List<SourceEpisode> parseEpisodes(
   SiteRule rule, {
   required String baseForLinks,
 }) {
-  final doc = html.parse(body);
+  final engine = SelectorEngine.forType(rule.selectorType);
+  final r = rule.episodes;
   final out = <SourceEpisode>[];
   var n = 0;
-  for (final el in doc.querySelectorAll(rule.episodes.item)) {
-    final title = _value(
-      el,
-      rule.episodes.title,
-      rule.episodes.titleAttr,
-      'text',
+  for (final item in engine.items(body, r.item)) {
+    final link = engine.field(
+      item,
+      r.link,
+      attr: r.linkAttr,
+      fallbackAttr: 'href',
     );
-    final link = _value(el, rule.episodes.link, rule.episodes.linkAttr, 'href');
     if (link == null) continue;
+    final title = engine.field(
+      item,
+      r.title,
+      attr: r.titleAttr,
+      fallbackAttr: 'text',
+    );
     n++;
     out.add(
       SourceEpisode(
@@ -163,7 +165,8 @@ List<SourceEpisode> parseEpisodes(
 /// Runs the extraction pipeline, returning the final stream URL. [fetch] is
 /// injected so tests can run without network.
 Future<String> runPipeline(
-  VideoRule video, {
+  VideoRule video,
+  SelectorEngine engine, {
   required String startUrl,
   required String startDoc,
   required String base,
@@ -173,13 +176,13 @@ Future<String> runPipeline(
   var doc = startDoc;
   for (final step in video.steps) {
     if (step.selector != null) {
-      final el = html.parse(doc).querySelector(step.selector!);
-      final v = el == null
-          ? null
-          : (step.attr == 'text'
-                ? el.text.trim()
-                : el.attributes[step.attr ?? 'src']);
-      if (v == null || v.isEmpty) {
+      final v = engine.docField(
+        doc,
+        step.selector!,
+        attr: step.attr,
+        fallbackAttr: 'src',
+      );
+      if (v == null) {
         throw WebSourceException('No match for selector "${step.selector}"');
       }
       url = v;

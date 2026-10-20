@@ -122,7 +122,33 @@ URL*. `selector`/`attr` and `regex` set the URL from the current document;
 `fetch` loads the current URL as the new document; `resolveRelative` makes the
 URL absolute. The URL after the last step is handed to mpv (HLS/`.m3u8` and
 `.mp4` both play), with `headers`. The parsing and pipeline are covered by
-`test/web_source_test.dart`.
+`test/web_source_test.dart` and `test/web_xpath_test.dart`.
+
+### CSS or XPath selectors
+
+Set `"selectorType": "xpath"` at the top of a rule to write every selector in
+XPath instead of CSS (default is `"css"`). The field meaning is identical; only
+the selector language changes. With XPath you usually select the attribute in
+the selector itself (`.//a/@href`) rather than via `linkAttr`. Item selectors
+return a node set; field selectors run relative to each item (`.` is the item,
+`.//` descends). `test/web_xpath_test.dart` scrapes the same fixture with CSS
+and XPath and asserts identical output.
+
+### Importing rules
+
+Three ways, in **Settings → Web sources**:
+
+- **Import rule file** — pick a local `.json`.
+- **Paste JSON** — paste one rule or an array.
+- **Import from URL** — fetch from a URL you enter (remembered between runs,
+  **no default**). The URL may return a single rule, an array of rules, or an
+  index `{"rules": [{"name": "...", "url": "..."}]}` whose entries are fetched
+  and imported. Relative `url`s resolve against the index URL.
+
+Every rule is validated on import and on load (`SiteRule.validate()`); a rule
+with a bad selector, a missing `{query}`, an empty step, etc. is rejected with a
+specific message instead of silently failing. Imported rules live in
+`~/Library/Application Support/com.ddx.yume/rules/`.
 
 Prefer a real `MediaSource` (above) when the site has a clean API — it's more
 robust than scraping HTML.

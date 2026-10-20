@@ -23,6 +23,7 @@ class AppSettings {
     this.bangumiToken = '',
     this.autoSync = true,
     this.cacheDir = '',
+    this.ruleRepoUrl = '',
   });
 
   final List<String> libraryPaths;
@@ -54,6 +55,9 @@ class AppSettings {
   /// when that volume is writable, else Application Support.
   final String cacheDir;
 
+  /// Last-used URL to import web-source rules from (no default).
+  final String ruleRepoUrl;
+
   AppSettings copyWith({
     List<String>? libraryPaths,
     String? metadataProvider,
@@ -70,6 +74,7 @@ class AppSettings {
     String? bangumiToken,
     bool? autoSync,
     String? cacheDir,
+    String? ruleRepoUrl,
   }) => AppSettings(
     libraryPaths: libraryPaths ?? this.libraryPaths,
     metadataProvider: metadataProvider ?? this.metadataProvider,
@@ -127,6 +132,7 @@ class AppSettings {
       bangumiToken: j['bangumiToken'] as String? ?? '',
       autoSync: j['autoSync'] as bool? ?? true,
       cacheDir: j['cacheDir'] as String? ?? '',
+      ruleRepoUrl: j['ruleRepoUrl'] as String? ?? '',
     );
   }
 }

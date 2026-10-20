@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'selector_engine.dart';
+
 /// A declarative description of how to scrape one website, loaded from a JSON
 /// file the user supplies. Yume ships the engine, not the rules: point it at a
 /// source you are allowed to use. See docs/PLUGINS.md.
@@ -42,12 +44,16 @@ class SiteRule {
     required this.search,
     required this.episodes,
     required this.video,
+    this.selectorType = 'css',
     this.userAgent,
   });
 
   final String id;
   final String name;
   final String baseUrl;
+
+  /// `css` (default) or `xpath` — the selector language used throughout.
+  final String selectorType;
   final String? userAgent;
   final SearchRule search;
   final EpisodesRule episodes;
@@ -61,6 +67,7 @@ class SiteRule {
       id: 'web:${j['id']}',
       name: j['name'] as String,
       baseUrl: (j['baseUrl'] as String).trimRight(),
+      selectorType: (j['selectorType'] as String? ?? 'css').toLowerCase(),
       userAgent: j['userAgent'] as String?,
       search: SearchRule.fromJson((j['search'] as Map).cast()),
       episodes: EpisodesRule.fromJson((j['episodes'] as Map).cast()),
@@ -70,6 +77,57 @@ class SiteRule {
 
   /// The raw id without the `web:` prefix (as written in the file).
   String get rawId => id.startsWith('web:') ? id.substring(4) : id;
+
+  /// Human-readable problems with this rule (empty = usable). This is beyond
+  /// what [fromJson] enforces: it checks values, not just presence.
+  List<String> validate() {
+    final engine = SelectorEngine.forType(selectorType);
+    final out = <String>[];
+    if (rawId.trim().isEmpty) out.add('id is empty');
+    if (name.trim().isEmpty) out.add('name is empty');
+    if (!baseUrl.startsWith('http')) out.add('baseUrl must be an http(s) URL');
+    if (selectorType != 'css' && selectorType != 'xpath') {
+      out.add('selectorType must be "css" or "xpath"');
+      return out; // can't validate selectors against an unknown engine
+    }
+    if (!search.url.contains('{query}')) {
+      out.add('search.url must contain the {query} placeholder');
+    }
+    void sel(String? s, String where) {
+      if (s == null || s.isEmpty) return;
+      final err = engine.validateSelector(s);
+      if (err != null) out.add('$where: $err');
+    }
+
+    if (search.item.isEmpty) out.add('search.item is empty');
+    sel(search.item, 'search.item');
+    sel(search.title, 'search.title');
+    sel(search.link, 'search.link');
+    sel(search.cover, 'search.cover');
+    if (episodes.item.isEmpty) out.add('episodes.item is empty');
+    sel(episodes.item, 'episodes.item');
+    sel(episodes.title, 'episodes.title');
+    sel(episodes.link, 'episodes.link');
+    if (video.steps.isEmpty) out.add('video.steps is empty');
+    for (var i = 0; i < video.steps.length; i++) {
+      final step = video.steps[i];
+      if (step.selector == null &&
+          step.regex == null &&
+          !step.fetch &&
+          !step.resolveRelative) {
+        out.add('video.steps[$i] does nothing');
+      }
+      sel(step.selector, 'video.steps[$i].selector');
+      if (step.regex != null) {
+        try {
+          RegExp(step.regex!);
+        } catch (_) {
+          out.add('video.steps[$i]: invalid regex');
+        }
+      }
+    }
+    return out;
+  }
 
   static List<SiteRule> parseList(String jsonText) {
     final data = jsonDecode(jsonText);

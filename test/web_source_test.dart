@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:yume/sources/web/site_rule.dart';
+import 'package:yume/sources/web/selector_engine.dart';
 import 'package:yume/sources/web/web_source.dart';
 
 const _ruleJson = '''
@@ -89,6 +90,7 @@ void main() {
     final fetched = <String>[];
     final stream = await runPipeline(
       rule.video,
+      SelectorEngine.forType(rule.selectorType),
       startUrl: 'https://demo.test/watch/1-1',
       startDoc: episodePage,
       base: rule.baseUrl,
@@ -105,6 +107,7 @@ void main() {
     expect(
       () => runPipeline(
         rule.video,
+        SelectorEngine.forType(rule.selectorType),
         startUrl: 'https://demo.test/x',
         startDoc: '<html></html>',
         base: rule.baseUrl,
