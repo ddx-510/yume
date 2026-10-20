@@ -5,6 +5,7 @@ import '../../models/models.dart';
 import '../theme.dart';
 import '../widgets/cover_image.dart';
 import '../widgets/glass.dart';
+import 'anime_screen.dart';
 import 'show_detail_screen.dart';
 
 class WatchlistScreen extends StatefulWidget {
@@ -121,18 +122,28 @@ class _EntryRow extends StatelessWidget {
     final app = AppServices.of(context);
     final e = entry;
     final show = app.library.byId(e.showId);
+    final meta = ShowMetadata(
+      provider: e.anilistId != null ? 'anilist' : 'bangumi',
+      anilistId: e.anilistId,
+      bangumiId: e.bangumiId,
+      title: e.title,
+      coverUrl: e.coverUrl,
+      totalEpisodes: e.totalEpisodes,
+    );
+    // File-less stand-in for shows tracked from Discover.
+    final target = show ?? app.library.showFor(meta);
     final total = e.totalEpisodes;
     return Glass(
       blur: false,
       radius: 16,
       child: InkWell(
-        onTap: show == null
-            ? null
-            : () => Navigator.of(context).push(
+        onTap: () => show != null
+            ? Navigator.of(context).push(
                 MaterialPageRoute(
                   builder: (_) => ShowDetailScreen(showId: show.id),
                 ),
-              ),
+              )
+            : openAnime(context, meta),
         child: Padding(
           padding: const EdgeInsets.all(10),
           child: Row(
@@ -176,18 +187,18 @@ class _EntryRow extends StatelessWidget {
                   ],
                 ),
               ),
-              if (show != null) ...[
+              ...[
                 IconButton(
                   tooltip: '−1 episode',
                   onPressed: e.progress > 0
-                      ? () => app.watchlist.setProgress(show, e.progress - 1)
+                      ? () => app.watchlist.setProgress(target, e.progress - 1)
                       : null,
                   icon: const Icon(Icons.remove_rounded, size: 18),
                 ),
                 IconButton(
                   tooltip: '+1 episode',
                   onPressed: () =>
-                      app.watchlist.setProgress(show, e.progress + 1),
+                      app.watchlist.setProgress(target, e.progress + 1),
                   icon: const Icon(Icons.add_rounded, size: 18),
                 ),
               ],

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../app_services.dart';
 import '../theme.dart';
 import '../widgets/glass.dart';
+import 'discover_screen.dart';
 import 'library_screen.dart';
 import 'settings_screen.dart';
 import 'sources_screen.dart';
@@ -22,7 +23,8 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _started = false;
 
   static const _items = [
-    (Icons.grid_view_rounded, 'Library'),
+    (Icons.explore_rounded, 'Discover'),
+    (Icons.video_library_rounded, 'Library'),
     (Icons.bookmark_rounded, 'Watchlist'),
     (Icons.extension_rounded, 'Sources'),
     (Icons.tune_rounded, 'Settings'),
@@ -41,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     const pages = [
+      DiscoverScreen(),
       LibraryScreen(),
       WatchlistScreen(),
       SourcesScreen(),

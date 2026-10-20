@@ -60,6 +60,31 @@ class BangumiClient {
         .toList();
   }
 
+  /// Weekly airing schedule (每日放送): weekday (1 = Mon … 7 = Sun) -> shows.
+  Future<Map<int, List<ShowMetadata>>> calendar() async {
+    final data = await _send('GET', '/calendar') as List;
+    final out = <int, List<ShowMetadata>>{};
+    for (final day in data.cast<Map>()) {
+      final weekday = ((day['weekday'] as Map)['id'] as num).toInt();
+      // Most-followed first.
+      final items = (day['items'] as List? ?? const []).cast<Map>().toList()
+        ..sort(
+          (a, b) => ((b['rating'] as Map?)?['total'] as num? ?? 0).compareTo(
+            (a['rating'] as Map?)?['total'] as num? ?? 0,
+          ),
+        );
+      out[weekday] = [
+        for (final m in items)
+          _toMetadata({
+            ...m.cast<String, dynamic>(),
+            'date': m['air_date'],
+            'eps': m['eps_count'] ?? m['eps'],
+          }),
+      ];
+    }
+    return out;
+  }
+
   Future<ShowMetadata?> byId(int id) async {
     final m = await _send('GET', '/v0/subjects/$id') as Map?;
     return m == null ? null : _toMetadata(m.cast());
@@ -156,7 +181,8 @@ class BangumiClient {
       bangumiId: m['id'] as int?,
       title: (cn != null && cn.isNotEmpty) ? cn : (m['name'] as String? ?? ''),
       titleNative: m['name'] as String?,
-      coverUrl: (images?['large'] ?? images?['common']) as String?,
+      coverUrl: ((images?['large'] ?? images?['common']) as String?)
+          ?.replaceFirst('http://', 'https://'),
       synopsis: (m['summary'] as String?)?.trim(),
       totalEpisodes: (m['eps'] ?? m['total_episodes']) as int?,
       score: (rating?['score'] as num?)?.toDouble(),

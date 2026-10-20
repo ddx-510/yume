@@ -5,6 +5,7 @@ import '../../models/models.dart';
 import '../theme.dart';
 import '../widgets/cover_image.dart';
 import '../widgets/glass.dart';
+import '../widgets/poster_card.dart';
 import 'player_screen.dart';
 import 'show_detail_screen.dart';
 
@@ -115,13 +116,7 @@ class _LibraryScreenState extends State<LibraryScreen> {
                           SliverPadding(
                             padding: const EdgeInsets.fromLTRB(32, 4, 32, 32),
                             sliver: SliverGrid(
-                              gridDelegate:
-                                  const SliverGridDelegateWithMaxCrossAxisExtent(
-                                    maxCrossAxisExtent: 180,
-                                    childAspectRatio: 0.58,
-                                    crossAxisSpacing: 20,
-                                    mainAxisSpacing: 24,
-                                  ),
+                              gridDelegate: posterGridDelegate,
                               delegate: SliverChildBuilderDelegate(
                                 (context, i) => _ShowCard(show: shows[i]),
                                 childCount: shows.length,
@@ -190,97 +185,26 @@ class _EmptyState extends StatelessWidget {
   );
 }
 
-/// Poster with title underneath; lifts slightly on hover.
-class _ShowCard extends StatefulWidget {
+class _ShowCard extends StatelessWidget {
   const _ShowCard({required this.show});
   final Show show;
 
   @override
-  State<_ShowCard> createState() => _ShowCardState();
-}
-
-class _ShowCardState extends State<_ShowCard> {
-  bool _hover = false;
-
-  @override
   Widget build(BuildContext context) {
     final app = AppServices.of(context);
-    final show = widget.show;
     final watched = show.episodes
         .where((e) => app.progress.of(e.path)?.watched ?? false)
         .length;
     final total = show.metadata?.totalEpisodes ?? show.episodes.length;
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      onEnter: (_) => setState(() => _hover = true),
-      onExit: (_) => setState(() => _hover = false),
-      child: GestureDetector(
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => ShowDetailScreen(showId: show.id)),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Expanded(
-              child: AnimatedScale(
-                scale: _hover ? 1.03 : 1,
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeOut,
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(
-                      color: _hover ? const Color(0x55FFFFFF) : Palette.border,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.5),
-                        blurRadius: 24,
-                        offset: const Offset(0, 10),
-                      ),
-                    ],
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(15),
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: [
-                        CoverImage(
-                          url: show.metadata?.coverUrl,
-                          fallbackTitle: show.title,
-                        ),
-                        if (watched > 0)
-                          Positioned(
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            child: ThinProgress(watched / total),
-                          ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Text(
-              show.displayTitle,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(
-                fontSize: 13.5,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              watched > 0
-                  ? '$watched / $total watched'
-                  : '${show.episodes.length} episodes',
-              style: const TextStyle(fontSize: 12, color: Palette.textFaint),
-            ),
-          ],
-        ),
+    return PosterCard(
+      coverUrl: show.metadata?.coverUrl,
+      title: show.displayTitle,
+      subtitle: watched > 0
+          ? '$watched / $total watched'
+          : '${show.episodes.length} episodes',
+      progress: watched > 0 ? watched / total : null,
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => ShowDetailScreen(showId: show.id)),
       ),
     );
   }

@@ -18,6 +18,7 @@ Black glassmorphism theme: tokens in `lib/ui/theme.dart`, shared glass widgets i
 
 | | Status |
 |---|---|
+| **Discover** (home tab): Kazumi-style catalogue. Trending, current season, all-time popular (AniList), weekly airing schedule 每日放送 (Bangumi), search any anime. Catalogue pages show details + episode titles and can go on the watchlist. Metadata only; playback comes from your library or a legal source plug-in | ✅ no keys needed |
 | **Local library**: scans folders (default `/Volumes/Seagate_ddx/07 Anime`), parses release names (`[Group] Title - 03`, `Title.S01E03`, `第03话`, `Episode 03` in a show folder…), groups into shows/seasons | ✅ |
 | **Auto metadata**: AniList (cover, synopsis, score, genres, episode count) + Bangumi (Chinese episode titles, ids); manual "Fix match" dialog | ✅ no keys needed |
 | **Player**: media_kit / libmpv, ASS/SRT subtitles via libass (embedded + sidecar files auto-loaded), audio/subtitle track menus, speed, fullscreen, keyboard shortcuts, auto next episode | ✅ |

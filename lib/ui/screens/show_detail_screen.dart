@@ -1,5 +1,3 @@
-import 'dart:ui';
-
 import 'package:flutter/material.dart';
 
 import '../../app_services.dart';
@@ -7,6 +5,7 @@ import '../../models/models.dart';
 import '../theme.dart';
 import '../widgets/cover_image.dart';
 import '../widgets/glass.dart';
+import '../widgets/poster_card.dart';
 import 'player_screen.dart';
 
 String formatDuration(Duration d) {
@@ -62,28 +61,7 @@ class ShowDetailScreen extends StatelessWidget {
           backgroundColor: Palette.background,
           body: Stack(
             children: [
-              // Blurred cover as an ambient backdrop.
-              Positioned.fill(
-                child: Opacity(
-                  opacity: 0.45,
-                  child: ImageFiltered(
-                    imageFilter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
-                    child: CoverImage(url: m?.coverUrl, fallbackTitle: ''),
-                  ),
-                ),
-              ),
-              const Positioned.fill(
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [Color(0x66050507), Color(0xF2050507)],
-                      stops: [0, 0.6],
-                    ),
-                  ),
-                ),
-              ),
+              Positioned.fill(child: CoverBackdrop(coverUrl: m?.coverUrl)),
               ListView(
                 padding: const EdgeInsets.fromLTRB(40, 72, 40, 40),
                 children: [
@@ -159,7 +137,7 @@ class ShowDetailScreen extends StatelessWidget {
                                         : 'Play EP ${next.episodeKey ?? ''}',
                                   ),
                                 ),
-                                _WatchStatusButton(show: show, entry: entry),
+                                WatchStatusButton(show: show, entry: entry),
                                 OutlinedButton(
                                   onPressed: () => _fixMatch(context, show),
                                   child: Text(
@@ -175,7 +153,7 @@ class ShowDetailScreen extends StatelessWidget {
                   ),
                   if (m?.synopsis != null) ...[
                     const SizedBox(height: 32),
-                    _Synopsis(m!.synopsis!),
+                    Synopsis(m!.synopsis!),
                   ],
                   const SizedBox(height: 32),
                   Glass(
@@ -223,15 +201,15 @@ class ShowDetailScreen extends StatelessWidget {
   }
 }
 
-class _Synopsis extends StatefulWidget {
-  const _Synopsis(this.text);
+class Synopsis extends StatefulWidget {
+  const Synopsis(this.text, {super.key});
   final String text;
 
   @override
-  State<_Synopsis> createState() => _SynopsisState();
+  State<Synopsis> createState() => SynopsisState();
 }
 
-class _SynopsisState extends State<_Synopsis> {
+class SynopsisState extends State<Synopsis> {
   bool _open = false;
 
   @override
@@ -256,8 +234,8 @@ class _SynopsisState extends State<_Synopsis> {
   );
 }
 
-class _WatchStatusButton extends StatelessWidget {
-  const _WatchStatusButton({required this.show, required this.entry});
+class WatchStatusButton extends StatelessWidget {
+  const WatchStatusButton({super.key, required this.show, required this.entry});
   final Show show;
   final WatchEntry? entry;
 

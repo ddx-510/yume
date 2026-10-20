@@ -60,6 +60,35 @@ class AniListClient {
     return list.map((m) => _toMetadata(m.cast<String, dynamic>())).toList();
   }
 
+  /// Catalogue listing for the Discover tab. [sort] is an AniList MediaSort
+  /// (e.g. `TRENDING_DESC`, `POPULARITY_DESC`); [season] + [year] narrow it
+  /// to one broadcast season (`WINTER`/`SPRING`/`SUMMER`/`FALL`).
+  Future<List<ShowMetadata>> browse({
+    String sort = 'TRENDING_DESC',
+    String? season,
+    int? year,
+    int page = 1,
+    int perPage = 36,
+  }) async {
+    final data = await query(
+      '''
+      query (\$sort: [MediaSort], \$season: MediaSeason, \$year: Int, \$page: Int, \$perPage: Int) {
+        Page(page: \$page, perPage: \$perPage) {
+          media(type: ANIME, isAdult: false, sort: \$sort, season: \$season, seasonYear: \$year) { $_mediaFields }
+        }
+      }''',
+      {
+        'sort': [sort],
+        'season': ?season,
+        'year': ?year,
+        'page': page,
+        'perPage': perPage,
+      },
+    );
+    final list = ((data['Page'] as Map)['media'] as List).cast<Map>();
+    return list.map((m) => _toMetadata(m.cast<String, dynamic>())).toList();
+  }
+
   Future<ShowMetadata?> byId(int id) async {
     final data = await query(
       '''

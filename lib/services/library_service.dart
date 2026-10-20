@@ -29,6 +29,27 @@ class LibraryService extends ChangeNotifier {
     return null;
   }
 
+  /// The local show matching a catalogue entry (same AniList or Bangumi id).
+  Show? matchFor(ShowMetadata m) {
+    for (final s in _shows) {
+      final sm = s.metadata;
+      if (sm == null) continue;
+      if (m.anilistId != null && sm.anilistId == m.anilistId) return s;
+      if (m.bangumiId != null && sm.bangumiId == m.bangumiId) return s;
+    }
+    return null;
+  }
+
+  /// A catalogue entry as a [Show]: the local one if you have the files,
+  /// otherwise a file-less stand-in (id `anilist:123` / `bgm:456`) so it can
+  /// still go on the watchlist.
+  Show showFor(ShowMetadata m) =>
+      matchFor(m) ??
+      Show(id: remoteId(m), title: m.title, episodes: const [], metadata: m);
+
+  static String remoteId(ShowMetadata m) =>
+      m.anilistId != null ? 'anilist:${m.anilistId}' : 'bgm:${m.bangumiId}';
+
   Future<void> load() async {
     final data = await _store.read();
     if (data is List) {

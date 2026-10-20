@@ -8,6 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import '../app_services.dart';
+import '../ui/screens/anime_screen.dart';
 import '../ui/screens/home_screen.dart';
 import '../ui/screens/player_screen.dart';
 import '../ui/screens/show_detail_screen.dart';
@@ -16,6 +17,7 @@ import '../ui/screens/show_detail_screen.dart';
 ///   ext.yume.snapshot {path}          — PNG of the widget tree
 ///   ext.yume.openShow {index}         — push a show's detail page
 ///   ext.yume.play {index, episode}    — open the player
+///   ext.yume.openAnilist {id}        — open a catalogue page
 ///   ext.yume.tab {index}              — switch home tab
 ///   ext.yume.back                     — pop the top route
 ///   ext.yume.state                    — JSON summary of library/progress
@@ -57,6 +59,12 @@ class DebugHooks {
         ),
       );
       return ok({'show': show.displayTitle, 'episode': ep.fileName});
+    });
+
+    developer.registerExtension('ext.yume.openAnilist', (_, params) async {
+      final m = await app.metadata.anilist.byId(int.parse(params['id']!));
+      openAnime(navigatorKey.currentContext!, m!);
+      return ok({'title': m.title});
     });
 
     developer.registerExtension('ext.yume.tab', (_, params) async {
