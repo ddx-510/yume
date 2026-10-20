@@ -5,7 +5,9 @@
 /// legal online sources (your own media server, a Jellyfin/Plex/Emby
 /// instance, an official free-to-watch catalogue with a public API, …) can be
 /// added later by implementing [MediaSource] and registering it in
-/// [SourceRegistry]. Yume deliberately ships no scrapers for unlicensed sites.
+/// [SourceRegistry]. For sites without an API there is also a generic,
+/// rule-driven web scraper (see sources/web/); Yume ships no site rules and
+/// should only be pointed at sources you are allowed to use.
 library;
 
 import 'package:flutter/widgets.dart';
@@ -107,6 +109,21 @@ class SourceRegistry extends ChangeNotifier {
       throw StateError('Source "${source.id}" already registered');
     }
     _sources.add(source);
+    notifyListeners();
+  }
+
+  void unregister(String id) {
+    _sources.removeWhere((s) => s.id == id);
+    notifyListeners();
+  }
+
+  /// Replaces every source whose id starts with [prefix] with [replacements].
+  /// Used to re-load the user's web-source rules after they change.
+  void replaceWithPrefix(String prefix, Iterable<MediaSource> replacements) {
+    _sources.removeWhere((s) => s.id.startsWith(prefix));
+    for (final s in replacements) {
+      if (!_sources.any((e) => e.id == s.id)) _sources.add(s);
+    }
     notifyListeners();
   }
 

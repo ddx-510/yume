@@ -16,6 +16,7 @@ import 'services/watchlist_service.dart';
 import 'sources/direct_url_source.dart';
 import 'sources/local_source.dart';
 import 'sources/media_source.dart';
+import 'sources/web/rule_store.dart';
 
 /// Wires up all services. Accessed from widgets via [AppServices.of].
 class AppServices {
@@ -28,6 +29,7 @@ class AppServices {
   late final ProgressService progress;
   late final WatchlistService watchlist;
   late final CoverCache covers;
+  late final RuleStore ruleStore;
   final sources = SourceRegistry();
 
   static Future<AppServices> create() async {
@@ -58,10 +60,13 @@ class AppServices {
       s.watchlist.load(),
     ]);
 
-    // Plug-in sources. Add new legal sources here.
+    // Built-in sources. Add new ones here; the engine ships no site rules.
     s.sources
       ..register(LocalLibrarySource(s.library))
       ..register(DirectUrlSource());
+    // User-supplied web-source rules (<appSupport>/rules/*.json).
+    s.ruleStore = RuleStore(Directory(p.join(dir.path, 'rules')), s.sources);
+    await s.ruleStore.load();
     await s.sources.initAll();
     return s;
   }

@@ -7,6 +7,7 @@ import '../../services/metadata/anilist_client.dart';
 import '../../services/settings_service.dart';
 import '../theme.dart';
 import '../widgets/glass.dart';
+import 'web_sources_section.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
@@ -221,6 +222,7 @@ class SettingsScreen extends StatelessWidget {
                   const _TrackerCheck(trackerId: 'bangumi'),
                 ],
               ),
+              const WebSourcesSection(),
               Padding(
                 padding: const EdgeInsets.fromLTRB(36, 8, 36, 0),
                 child: Text(

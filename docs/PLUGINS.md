@@ -71,6 +71,62 @@ s.sources
 It then appears on the **Sources** page with search/browse and plays in the
 same player (danmaku, subtitles, speed, resume).
 
+## Web source rules (the scraper engine)
+
+For sites without an API, Yume has a generic, rule-driven scraper — the same
+idea as Kazumi's rule files. You describe a site in JSON; the engine does the
+HTTP + HTML parsing. **Yume ships no rules.** Only point it at a source you are
+allowed to use (your own server, a public-domain or officially free catalogue).
+Do not use it to access pirated content.
+
+Import a rule in **Settings → Web sources** ("Import rule file" or "Paste
+JSON"), or drop a `.json` file into `~/Library/Application Support/com.ddx.yume/rules/`
+and hit Reload. Each rule becomes a source on the **Sources** page, searchable
+and playable in the normal player (resume, subtitles, danmaku by title match).
+
+A rule has three parts — `search`, `episodes`, and a `video` extraction
+pipeline. Selectors are CSS; `attr` defaults to `href`/`src`, or use `"text"`
+for the element's text. See [example-source-rule.json](example-source-rule.json):
+
+```jsonc
+{
+  "id": "example",                 // source id (becomes web:example)
+  "name": "Example",
+  "baseUrl": "https://example.test",
+  "userAgent": "…",                // optional
+  "search": {
+    "url": "https://example.test/search?q={query}&page={page}",
+    "item": ".result",             // one element per show
+    "title": ".title",
+    "link": "a", "linkAttr": "href",
+    "cover": "img", "coverAttr": "data-src"
+  },
+  "episodes": {                    // parsed on the show page
+    "item": ".episode",
+    "title": "a", "link": "a", "linkAttr": "href"
+  },
+  "video": {                       // run on the episode page
+    "steps": [
+      {"selector": "iframe", "attr": "src"},   // grab the player iframe
+      {"resolveRelative": true},               // make it absolute
+      {"fetch": true},                         // load that page
+      {"regex": "file:\"(.*?\\.m3u8[^\"]*)\""} // pull the stream URL
+    ],
+    "headers": {"Referer": "https://example.test/"}  // sent when playing
+  }
+}
+```
+
+The `video.steps` pipeline carries a *current document* (HTML) and *current
+URL*. `selector`/`attr` and `regex` set the URL from the current document;
+`fetch` loads the current URL as the new document; `resolveRelative` makes the
+URL absolute. The URL after the last step is handed to mpv (HLS/`.m3u8` and
+`.mp4` both play), with `headers`. The parsing and pipeline are covered by
+`test/web_source_test.dart`.
+
+Prefer a real `MediaSource` (above) when the site has a clean API — it's more
+robust than scraping HTML.
+
 ## Ideas for next steps
 
 - Persist per-source config (URL, token) in `AppSettings` and add a config form.

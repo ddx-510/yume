@@ -19,6 +19,8 @@ import '../ui/screens/show_detail_screen.dart';
 ///   ext.yume.play {index, episode}    — open the player
 ///   ext.yume.openAnilist {id}        — open a catalogue page
 ///   ext.yume.tab {index}              — switch home tab
+///   ext.yume.sourceResolve {id,q}     — search+episodes+resolve a source
+///   ext.yume.sources                  — list registered source ids
 ///   ext.yume.back                     — pop the top route
 ///   ext.yume.state                    — JSON summary of library/progress
 class DebugHooks {
@@ -71,6 +73,29 @@ class DebugHooks {
       HomeScreen.tab.value = int.parse(params['index'] ?? '0');
       return ok({});
     });
+
+    // End-to-end check of a web source: search -> episodes -> resolve.
+    developer.registerExtension('ext.yume.sourceResolve', (_, params) async {
+      final src = app.sources.byId(params['id']!)!;
+      final shows = await src.search(params['q'] ?? '');
+      final eps = shows.isEmpty ? [] : await src.episodes(shows.first);
+      final media = eps.isEmpty
+          ? null
+          : await src.resolve(shows.first, eps.first);
+      return ok({
+        'shows': [for (final s in shows) s.title],
+        'episodes': [for (final e in eps) e.title],
+        'stream': media?.uri,
+        'headers': media?.httpHeaders,
+      });
+    });
+
+    developer.registerExtension(
+      'ext.yume.sources',
+      (_, _) async => ok({
+        'ids': [for (final s in app.sources.sources) s.id],
+      }),
+    );
 
     developer.registerExtension('ext.yume.back', (_, _) async {
       navigatorKey.currentState!.maybePop();

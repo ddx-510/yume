@@ -1,0 +1,33 @@
+{
+  "id": "example",
+  "name": "Example (template — not a real site)",
+  "baseUrl": "https://example.test",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
+  "search": {
+    "url": "https://example.test/search?keyword={query}&page={page}",
+    "item": ".search-result .item",
+    "title": ".item-title",
+    "link": "a.item-link",
+    "linkAttr": "href",
+    "cover": "img.poster",
+    "coverAttr": "data-src"
+  },
+  "episodes": {
+    "item": ".episode-list a.episode",
+    "title": "",
+    "titleAttr": "text",
+    "link": "",
+    "linkAttr": "href"
+  },
+  "video": {
+    "steps": [
+      {"selector": "iframe.player-frame", "attr": "src"},
+      {"resolveRelative": true},
+      {"fetch": true},
+      {"regex": "\"file\"\\s*:\\s*\"(https?:[^\"]+\\.m3u8[^\"]*)\""}
+    ],
+    "headers": {
+      "Referer": "https://example.test/"
+    }
+  }
+}
