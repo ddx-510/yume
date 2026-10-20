@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../../app_services.dart';
+import '../theme.dart';
+import '../widgets/glass.dart';
 import 'library_screen.dart';
 import 'settings_screen.dart';
 import 'sources_screen.dart';
@@ -18,6 +20,13 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   bool _started = false;
+
+  static const _items = [
+    (Icons.grid_view_rounded, 'Library'),
+    (Icons.bookmark_rounded, 'Watchlist'),
+    (Icons.extension_rounded, 'Sources'),
+    (Icons.tune_rounded, 'Settings'),
+  ];
 
   @override
   void didChangeDependencies() {
@@ -42,41 +51,36 @@ class _HomeScreenState extends State<HomeScreen> {
       builder: (context, index, _) => Scaffold(
         body: Row(
           children: [
-            NavigationRail(
-              selectedIndex: index,
-              onDestinationSelected: (i) => HomeScreen.tab.value = i,
-              labelType: NavigationRailLabelType.all,
-              leading: Padding(
-                padding: const EdgeInsets.only(top: 28, bottom: 12),
-                child: Text(
-                  '夢',
-                  style: Theme.of(context).textTheme.headlineMedium,
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 0, 16),
+              child: Glass(
+                radius: 24,
+                child: SizedBox(
+                  width: 68,
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 22),
+                      const Text(
+                        '夢',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w300,
+                          color: Palette.text,
+                        ),
+                      ),
+                      const SizedBox(height: 28),
+                      for (var i = 0; i < _items.length; i++)
+                        _NavButton(
+                          icon: _items[i].$1,
+                          label: _items[i].$2,
+                          selected: i == index,
+                          onTap: () => HomeScreen.tab.value = i,
+                        ),
+                    ],
+                  ),
                 ),
               ),
-              destinations: const [
-                NavigationRailDestination(
-                  icon: Icon(Icons.video_library_outlined),
-                  selectedIcon: Icon(Icons.video_library),
-                  label: Text('Library'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.bookmark_border),
-                  selectedIcon: Icon(Icons.bookmark),
-                  label: Text('Watchlist'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.extension_outlined),
-                  selectedIcon: Icon(Icons.extension),
-                  label: Text('Sources'),
-                ),
-                NavigationRailDestination(
-                  icon: Icon(Icons.settings_outlined),
-                  selectedIcon: Icon(Icons.settings),
-                  label: Text('Settings'),
-                ),
-              ],
             ),
-            const VerticalDivider(width: 1),
             Expanded(
               child: IndexedStack(index: index, children: pages),
             ),
@@ -85,4 +89,43 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
     );
   }
+}
+
+class _NavButton extends StatelessWidget {
+  const _NavButton({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) => Padding(
+    padding: const EdgeInsets.symmetric(vertical: 6),
+    child: Tooltip(
+      message: label,
+      waitDuration: const Duration(milliseconds: 400),
+      child: Material(
+        color: selected ? Palette.glassStrong : Colors.transparent,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(14),
+          onTap: onTap,
+          child: SizedBox(
+            width: 46,
+            height: 46,
+            child: Icon(
+              icon,
+              size: 22,
+              color: selected ? Colors.white : Palette.textFaint,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
 }

@@ -8,6 +8,11 @@ Own code. [Kazumi](https://github.com/Predidit/Kazumi) served only as inspiratio
 | Show page | Player with danmaku |
 |---|---|
 | ![Show](docs/screenshots/show.png) | ![Player](docs/screenshots/player.png) |
+| **Watchlist** | **Settings** |
+| ![Watchlist](docs/screenshots/watchlist.png) | ![Settings](docs/screenshots/settings.png) |
+
+Black glassmorphism theme: tokens in `lib/ui/theme.dart`, shared glass widgets in
+`lib/ui/widgets/glass.dart`.
 
 ## Features (v0.1)
 

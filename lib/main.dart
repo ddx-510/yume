@@ -4,6 +4,8 @@ import 'package:media_kit/media_kit.dart';
 import 'app_services.dart';
 import 'debug/debug_hooks.dart';
 import 'ui/screens/home_screen.dart';
+import 'ui/theme.dart';
+import 'ui/widgets/glass.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,16 +20,17 @@ class YumeApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const seed = Color(0xFFE85D8E);
     return MaterialApp(
       title: 'Yume',
       debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.system,
-      theme: ThemeData(colorSchemeSeed: seed, brightness: Brightness.light),
-      darkTheme: ThemeData(colorSchemeSeed: seed, brightness: Brightness.dark),
+      themeMode: ThemeMode.dark,
+      theme: buildTheme(),
+      darkTheme: buildTheme(),
       navigatorKey: DebugHooks.navigatorKey,
-      builder: (context, child) =>
-          RepaintBoundary(key: DebugHooks.boundaryKey, child: child),
+      builder: (context, child) => RepaintBoundary(
+        key: DebugHooks.boundaryKey,
+        child: GlassBackground(child: child!),
+      ),
       home: const HomeScreen(),
     );
   }

@@ -11,6 +11,7 @@ import '../../danmaku/danmaku_models.dart';
 import '../../danmaku/danmaku_overlay.dart';
 import '../../models/models.dart';
 import '../../sources/media_source.dart';
+import '../widgets/glass.dart';
 import 'show_detail_screen.dart' show formatDuration;
 
 /// Full-window player: media_kit (libmpv) + resume + danmaku + subtitles.
@@ -279,7 +280,7 @@ class _PlayerScreenState extends State<PlayerScreen> {
 
   List<Widget> _topBar(BuildContext context) => [
     MaterialDesktopCustomButton(
-      icon: const Icon(Icons.arrow_back),
+      icon: const Icon(Icons.arrow_back_rounded),
       onPressed: () async {
         if (isFullscreen(context)) await exitFullscreen(context);
         if (mounted) Navigator.of(this.context).maybePop();
@@ -291,29 +292,30 @@ class _PlayerScreenState extends State<PlayerScreen> {
         _title,
         maxLines: 1,
         overflow: TextOverflow.ellipsis,
-        style: const TextStyle(color: Colors.white, fontSize: 15),
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 15,
+          fontWeight: FontWeight.w500,
+        ),
       ),
     ),
     if (_danmakuStatus != null)
       Padding(
-        padding: const EdgeInsets.only(right: 12),
-        child: Text(
-          _danmakuStatus!,
-          style: const TextStyle(color: Colors.white70, fontSize: 12),
-        ),
+        padding: const EdgeInsets.only(right: 8),
+        child: GlassChip(_danmakuStatus!, icon: Icons.chat_bubble_rounded),
       ),
   ];
 
   List<Widget> _bottomBar() => [
     if (_relative(-1) != null)
       MaterialDesktopCustomButton(
-        icon: const Icon(Icons.skip_previous),
+        icon: const Icon(Icons.skip_previous_rounded),
         onPressed: () => _openEpisode(_relative(-1)!),
       ),
     const MaterialDesktopPlayOrPauseButton(),
     if (_relative(1) != null)
       MaterialDesktopCustomButton(
-        icon: const Icon(Icons.skip_next),
+        icon: const Icon(Icons.skip_next_rounded),
         onPressed: () => _openEpisode(_relative(1)!),
       ),
     const MaterialDesktopVolumeButton(),
@@ -323,7 +325,9 @@ class _PlayerScreenState extends State<PlayerScreen> {
       listenable: danmaku,
       builder: (context, _) => MaterialDesktopCustomButton(
         icon: Icon(
-          danmaku.enabled ? Icons.comment : Icons.comments_disabled_outlined,
+          danmaku.enabled
+              ? Icons.chat_bubble_rounded
+              : Icons.chat_bubble_outline_rounded,
         ),
         onPressed: () {
           danmaku.enabled = !danmaku.enabled;
@@ -344,8 +348,19 @@ class _PlayerScreenState extends State<PlayerScreen> {
     final theme = MaterialDesktopVideoControlsThemeData(
       topButtonBar: _topBar(context),
       bottomButtonBar: _bottomBar(),
-      seekBarThumbColor: Theme.of(context).colorScheme.primary,
-      seekBarPositionColor: Theme.of(context).colorScheme.primary,
+      // Minimal white-on-black controls to match the glass theme.
+      seekBarThumbColor: Colors.white,
+      seekBarPositionColor: Colors.white,
+      seekBarBufferColor: const Color(0x40FFFFFF),
+      seekBarColor: const Color(0x26FFFFFF),
+      seekBarThumbSize: 12,
+      seekBarHeight: 3,
+      seekBarHoverHeight: 5,
+      buttonBarButtonColor: Colors.white,
+      buttonBarButtonSize: 22,
+      topButtonBarMargin: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+      bottomButtonBarMargin: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+      seekBarMargin: const EdgeInsets.symmetric(horizontal: 20),
       controlsHoverDuration: const Duration(seconds: 2),
       keyboardShortcuts: _shortcuts(),
     );
@@ -442,7 +457,7 @@ class _TrackMenu extends StatelessWidget {
         return PopupMenuButton<Object>(
           tooltip: isSub ? 'Subtitles' : 'Audio',
           icon: Icon(
-            isSub ? Icons.subtitles : Icons.audiotrack,
+            isSub ? Icons.subtitles_rounded : Icons.graphic_eq_rounded,
             color: Colors.white,
           ),
           itemBuilder: (_) => [
@@ -471,7 +486,7 @@ class _SpeedMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return PopupMenuButton<double>(
       tooltip: 'Speed',
-      icon: const Icon(Icons.speed, color: Colors.white),
+      icon: const Icon(Icons.speed_rounded, color: Colors.white),
       itemBuilder: (_) => [
         for (final r in const [0.5, 0.75, 1.0, 1.25, 1.5, 2.0])
           CheckedPopupMenuItem(
